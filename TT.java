@@ -33,11 +33,11 @@ public class TT {
 //		String postId = getLastPostId(cookie);
 //		System.out.println(postId);
 		String code = "of001938";
-//		System.out.println(existsPost(code, postId, cookie));
-		System.out.println(sendPost("wait me", "at 2018", code, cookie));
+		System.out.println(existsPost(code, 735441983, cookie));
+//		System.out.println(sendPost("apple", "upup", code, cookie));
 	}
 	
-	public static boolean sendPost(String title, String text, String code, String cookie) {
+	public static int sendPost(String title, String text, String code, String cookie) {
 		String url = "http://guba.eastmoney.com/action.aspx";
 		List<NameValuePair> nvps = new ArrayList<NameValuePair>();
 		nvps.add(new BasicNameValuePair("action", "add3"));
@@ -64,19 +64,28 @@ public class TT {
 			// {"result":true,"id":735268858,"autozc":0,"post_state":2,"appeal_state":0,"user_state":30,"error":"","error_code":"0"}
 			httpPost.setEntity(new UrlEncodedFormEntity(nvps, "utf-8"));
 			HttpResponse response = getHttpResponse(cookie, httpPost);
-			System.out.println(EntityUtils.toString(response.getEntity(), "utf-8"));
-			return response.getStatusLine().getStatusCode() == 200;
+			String responseBody = EntityUtils.toString(response.getEntity(), "utf-8");
+			System.out.println(responseBody);
+			if (responseBody.contains("true")) {
+				Pattern p = Pattern.compile("id\":(\\d+)");
+				Matcher matcher = p.matcher(responseBody);
+				if (matcher.find()) {
+					return Integer.parseInt(matcher.group(1));
+				}
+			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		return false;
+		return -1;
 	}
 	
-	public static boolean existsPost(String code, String postId, String cookie) {
+	public static boolean existsPost(String code, int postId, String cookie) {
 		String url = "http://guba.eastmoney.com/news," + code + "," + postId + ".html";
 		try {
-			HttpResponse response = getHttpResponse(cookie, new HttpGet(url));
-			return response.getStatusLine().getStatusCode() == 200;
+			String html = getHtml(url, cookie);
+			if (! html.contains("很抱歉，您访问的帖子不存在。")) {
+				return true;
+			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
